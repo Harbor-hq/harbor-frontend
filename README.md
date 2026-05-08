@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Harbor Frontend
 
-## Getting Started
+Web frontend for [Harbor](https://github.com/Harbor-hq/harbor) — on-chain batch
+payroll powered by the `hedegpay_batch` Soroban contract.
 
-First, run the development server:
+- **Dashboard** — live contract state (admin, treasury, token, batch counter)
+- **Invoices** — compose a payout batch and submit it via `execute_batch_payroll`
+- **Ledger** — history of `payout_logged` events from the off-chain listener
+- **Settings** — point the app at your deployed contract / RPC / network
+
+Built with Next.js 14 (App Router), TypeScript, Tailwind, Freighter wallet, and
+`@stellar/stellar-sdk` 12. All network access lives in `src/lib/harbor.ts`.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Install the
+[Freighter](https://freighter.app) browser extension to connect a wallet.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The app defaults to the public Soroban testnet with a mock contract id so it
+boots without setup. To talk to a real deployment:
 
-## Learn More
+1. Deploy `hedgepay_batch` (see `contracts/hedgepay_batch` in the upstream
+   [harbor](https://github.com/Harbor-hq/harbor) repo).
+2. `cp .env.local.example .env.local` and fill in
+   `NEXT_PUBLIC_HARBOR_CONTRACT_ID`, `NEXT_PUBLIC_HARBOR_RPC_URL`, and
+   `NEXT_PUBLIC_HARBOR_NETWORK_PASSPHRASE`.
+3. Restart `npm run dev`.
 
-To learn more about Next.js, take a look at the following resources:
+Everything can also be overridden at runtime from **Settings** (stored in your
+browser), which is handy for swapping networks without a rebuild.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How it works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`src/lib/harbor.ts` is the single integration point with the contract:
 
-## Deploy on Vercel
+- Read calls (`admin`, `treasury`, `token`, `max_batch_size`, `batch_counter`,
+  `dex_router`) are simulate-only — no wallet needed.
+- Write calls (`execute_batch_payroll`) follow a
+  `build → simulate → sign (Freighter) → send → poll` pipeline. The connected
+  wallet must be the contract **treasury**, since the contract enforces
+  `treasury.require_auth()`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+UI components never import the Stellar SDK directly — see
+[docs/ROADMAP.md](docs/ROADMAP.md) for the next contribution opportunities and
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to land changes.
