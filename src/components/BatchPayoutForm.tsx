@@ -121,58 +121,80 @@ export default function BatchPayoutForm() {
         </div>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_140px_140px_120px_auto]">
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Payee
+      <div className="space-y-4">
+        {/* Table Header - hidden on mobile */}
+        <div className="hidden sm:grid sm:grid-cols-[1fr_140px_140px_120px_auto] gap-2">
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Payee
+          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Amount
+          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Department
+          </div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Target token
+          </div>
+          <div />
         </div>
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Amount
-        </div>
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Department
-        </div>
-        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-          Target token
-        </div>
-        <div />
 
+        {/* Rows */}
         {rows.map((row) => (
           <div
             key={row.id}
-            className="contents"
+            className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_140px_140px_120px_auto] items-center border border-slate-200 p-3 sm:border-0 sm:p-0 rounded-md bg-slate-50 sm:bg-transparent"
           >
+            <div className="block sm:hidden text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Payee
+            </div>
             <input
               value={row.payee}
               onChange={(e) => setRow(row.id, { payee: e.target.value })}
               placeholder="G…"
-              className="rounded-md border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-slate-500 focus:outline-none"
+              aria-label="Payee wallet address or Federation ID"
+              className="rounded-md border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-slate-500 focus:outline-none w-full"
             />
+            <div className="block sm:hidden text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Amount
+            </div>
             <input
               value={row.amount}
               onChange={(e) => setRow(row.id, { amount: e.target.value })}
               placeholder="0.00"
               inputMode="decimal"
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
+              aria-label="Payout amount"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none w-full"
             />
+            <div className="block sm:hidden text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Department
+            </div>
             <input
               value={row.department}
               onChange={(e) => setRow(row.id, { department: e.target.value })}
               placeholder="eng"
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
+              aria-label="Department Symbol"
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none w-full"
             />
+            <div className="block sm:hidden text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Target token
+            </div>
             <input
               value={row.targetToken}
               onChange={(e) => setRow(row.id, { targetToken: e.target.value })}
               placeholder="C… (optional)"
-              className="rounded-md border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-slate-500 focus:outline-none"
+              aria-label="Target token address (optional)"
+              className="rounded-md border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-slate-500 focus:outline-none w-full"
             />
-            <button
-              onClick={() => setRows((rs) => rs.filter((r) => r.id !== row.id))}
-              className="text-sm text-slate-400 hover:text-red-600"
-              aria-label="Remove row"
-            >
-              ✕
-            </button>
+            <div className="flex justify-end pt-2 sm:pt-0">
+              <button
+                onClick={() => setRows((rs) => rs.filter((r) => r.id !== row.id))}
+                className="text-sm text-slate-400 hover:text-red-600 px-2 py-1 bg-slate-200 hover:bg-slate-300 sm:bg-transparent rounded-md"
+                aria-label="Remove row"
+              >
+                ✕ <span className="sm:hidden text-xs font-normal font-sans ml-1">Remove</span>
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -224,6 +246,8 @@ export default function BatchPayoutForm() {
 
       {result && (
         <div
+          role="status"
+          aria-live="polite"
           className={`mt-4 rounded-md border p-3 text-sm ${
             result.status === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"

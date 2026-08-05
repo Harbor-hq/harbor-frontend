@@ -27,16 +27,45 @@ export default function PayoutEvents() {
     load();
   }, [load]);
 
+  const exportToCsv = () => {
+    if (state.kind !== "ok" || state.events.length === 0) return;
+    const headers = ["payee", "amount", "department", "target_token"];
+    const csvContent = [
+      headers.join(","),
+      ...state.events.map((e) =>
+        [e.payee, e.amount, "", ""].join(",")
+      ),
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `harbor_ledger_export_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Recent payouts</h2>
-        <button
-          onClick={load}
-          className="text-sm text-slate-500 underline-offset-2 hover:underline"
-        >
-          refresh
-        </button>
+        <div className="flex gap-4">
+          {state.kind === "ok" && state.events.length > 0 && (
+            <button
+              onClick={exportToCsv}
+              className="text-sm text-indigo-600 underline-offset-2 hover:underline font-medium"
+            >
+              export to CSV
+            </button>
+          )}
+          <button
+            onClick={load}
+            className="text-sm text-slate-500 underline-offset-2 hover:underline"
+          >
+            refresh
+          </button>
+        </div>
       </div>
 
       {state.kind === "loading" && (
@@ -59,28 +88,30 @@ export default function PayoutEvents() {
       )}
 
       {state.kind === "ok" && state.events.length > 0 && (
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-              <th className="pb-2 pr-4 font-medium">Batch</th>
-              <th className="pb-2 pr-4 font-medium">Payee</th>
-              <th className="pb-2 pr-4 font-medium">Amount</th>
-              <th className="pb-2 pr-4 font-medium">Token</th>
-              <th className="pb-2 font-medium">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {state.events.map((e) => (
-              <tr key={`${e.txHash}-${e.index}`} className="border-b border-slate-100">
-                <td className="py-2 pr-4 font-mono">#{e.batchId}</td>
-                <td className="py-2 pr-4 font-mono">{e.payee}</td>
-                <td className="py-2 pr-4">{e.amount}</td>
-                <td className="py-2 pr-4 font-mono">{e.token}</td>
-                <td className="py-2 text-slate-500">{e.date}</td>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-sm min-w-[600px]">
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
+                <th className="pb-2 pr-4 font-medium">Batch</th>
+                <th className="pb-2 pr-4 font-medium">Payee</th>
+                <th className="pb-2 pr-4 font-medium">Amount</th>
+                <th className="pb-2 pr-4 font-medium">Token</th>
+                <th className="pb-2 font-medium">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {state.events.map((e) => (
+                <tr key={`${e.txHash}-${e.index}`} className="border-b border-slate-100">
+                  <td className="py-2 pr-4 font-mono">#{e.batchId}</td>
+                  <td className="py-2 pr-4 font-mono">{e.payee}</td>
+                  <td className="py-2 pr-4">{e.amount}</td>
+                  <td className="py-2 pr-4 font-mono">{e.token}</td>
+                  <td className="py-2 text-slate-500">{e.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

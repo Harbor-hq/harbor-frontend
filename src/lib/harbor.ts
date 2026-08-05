@@ -120,7 +120,9 @@ export function toBaseUnits(
   decimals = getConfig().tokenDecimals
 ): bigint {
   if (!value.trim()) throw new Error("Empty amount");
-  const [int = "", frac = ""] = value.trim().split(".");
+  const parts = value.trim().split(".");
+  if (parts.length > 2) throw new Error(`Invalid amount: ${value}`);
+  const [int = "", frac = ""] = parts;
   const sign = int.startsWith("-") ? BigInt(-1) : BigInt(1);
   const digits = int.replace(/^-/, "") + frac.padEnd(decimals, "0").slice(0, decimals);
   if (!/^\d+$/.test(digits)) throw new Error(`Invalid amount: ${value}`);
