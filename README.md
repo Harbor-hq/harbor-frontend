@@ -1,42 +1,75 @@
-# Harbor Frontend
+<div align="center">
 
-Web frontend for the **Harbor batch-payroll protocol** — an on-chain payroll dashboard for the `hedegpay_batch` Soroban contract. It provides live contract state, batch invoice settlement, a payout ledger, and runtime network configuration.
+<h1>Harbor Frontend</h1>
 
-Built with Next.js 14 (App Router), TypeScript, Tailwind, Freighter wallet, and `@stellar/stellar-sdk` 12. All network access lives in `src/lib/harbor.ts`.
+<p><strong>Web dashboard for the Harbor batch-payroll protocol.</strong></p>
+
+<p>
+  Live contract state, batch invoice settlement, a payout ledger, and runtime network configuration —<br/>
+  powered by <code>hedegpay_batch</code> on Soroban and the Freighter wallet.
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/next-14.0-000000" alt="Next.js 14" />
+  <img src="https://img.shields.io/badge/react-%5E18.0-61dafb" alt="React 18" />
+  <img src="https://img.shields.io/badge/typescript-%5E5.0-3178c6" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/stellar-sdk-12-6f42c1" alt="Stellar SDK 12" />
+  <img src="https://img.shields.io/badge/freighter-2-ec4899" alt="Freighter 2" />
+</p>
+
+<p>Part of the <a href="https://github.com/Harbor-hq">Harbor</a> ecosystem.</p>
+
+<br/>
+
+</div>
+
+---
+
+## Overview
+
+`harbor-frontend` is the React layer of the Harbor payroll protocol. It provides ready-to-use pages for submitting payroll batches, viewing contract state, and inspecting payout history — without building any of the Stellar wiring yourself.
+
+All contract and network access lives in a single integration layer, `src/lib/harbor.ts`. UI components never import the Stellar SDK directly, so behavior between the SDK and the UI never diverges.
+
+---
 
 ## Table of Contents
 
-- [Tech stack](#tech-stack)
-- [Quickstart](#quickstart)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [What's included](#whats-included)
+- [Page Reference](#page-reference)
+- [Integration Layer](#integration-layer)
 - [Architecture & Flow](#architecture--flow)
-- [Local setup](#local-setup)
-- [Development](#development)
-- [Project layout](#project-layout)
-- [Operator Guide](#operator-guide)
-- [Security Notes](#security-notes)
-- [Part of Harbor](#part-of-harbor)
+- [Design Principles](#design-principles)
+- [Contributing](#contributing)
+- [License](#license)
 
-## Tech stack
+---
 
-- **Framework:** Next.js 14 (App Router) + React 18
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Wallet:** Freighter (`@stellar/freighter-api` 2)
-- **Stellar SDK:** `@stellar/stellar-sdk` 12
-- **Integration layer:** all contract/RPC access in `src/lib/harbor.ts`
-
-## Quickstart
+## Installation
 
 ```bash
+git clone https://github.com/Harbor-hq/harbor-frontend.git
+cd harbor-frontend
 npm install
+```
+
+Requires Node.js v18+.
+
+---
+
+## Quick Start
+
+```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) and install the [Freighter](https://freighter.app) browser extension to connect a wallet.
 
 The app defaults to the public Soroban testnet with a **mock** contract id so it boots without setup — no env vars required to try it.
+
+---
 
 ## Configuration
 
@@ -56,43 +89,43 @@ Everything can also be overridden at runtime from **Settings** (stored in the br
 | `NEXT_PUBLIC_HARBOR_TOKEN_DECIMALS` | `6` | Decimal places used to format amounts |
 | `NEXT_PUBLIC_HARBOR_EVENTS_URL` | — | Payout events API (Harbor backend `/payouts`) |
 
-Config precedence: **runtime overrides (Settings) -> env vars -> testnet defaults**.
+**Config precedence:** runtime overrides (Settings) -> env vars -> testnet defaults.
 
-## What's included
+---
 
-### Dashboard (`src/app/dashboard/`)
+## Page Reference
 
-- Live contract state (admin, treasury, token, max batch size, batch counter, DEX router) via simulate-only reads.
-- `NotInitialized` banner until the contract is initialized.
-- Powered by `getContractStatus` in `src/lib/harbor.ts`.
+| Page | Purpose |
+| --- | --- |
+| **Dashboard** | Live contract state (admin, treasury, token, max batch size, counter, DEX router) via simulate-only reads. `NotInitialized` banner until initialized. |
+| **Invoices** | Compose a payout batch (payees, amounts, departments, optional `target_token`) and submit via `execute_batch_payroll`. |
+| **Ledger** | History of `payout_logged` events fetched from the off-chain events API. |
+| **Settings** | Point the app at your deployed contract / RPC / network; overrides persist in the browser. |
 
-### Invoices (`src/app/invoices/`)
+---
 
-- Compose a payout batch: payees, amounts, departments, and optional `target_token` per item.
-- Submit via `execute_batch_payroll` using the `build -> simulate -> sign (Freighter) -> send -> poll` pipeline.
-- The connected wallet must be the contract **treasury**, since the contract enforces `treasury.require_auth()`.
+## Integration Layer
 
-### Ledger (`src/app/ledger/`)
-
-- History of `payout_logged` events fetched from the off-chain events API (`fetchPayoutEvents`).
-- When `NEXT_PUBLIC_HARBOR_EVENTS_URL` is unset, returns an empty list so the UI contracts are stable.
-
-### Settings (`src/app/settings/`)
-
-- Point the app at your deployed contract / RPC / network.
-- Overrides persist in the browser; `clearOverrides()` resets to env/defaults.
-
-### Contract integration layer (`src/lib/harbor.ts`)
-
-The single source of truth for talking to the contract and the Stellar network:
+`src/lib/harbor.ts` is the single source of truth for talking to the contract and the Stellar network:
 
 - **Read calls** (`admin`, `treasury`, `token`, `max_batch_size`, `batch_counter`, `dex_router`) are simulate-only — no wallet needed.
-- **Write calls** (`execute_batch_payroll`) follow the `build -> simulate -> sign (Freighter) -> send -> poll` pipeline, including resource-fee estimation from the simulation and a 30 s poll for the final transaction status.
+- **Write calls** (`execute_batch_payroll`) follow a `build -> simulate -> sign (Freighter) -> send -> poll` pipeline, including resource-fee estimation from the simulation and a 30 s poll for the final transaction status.
 - **Amount helpers** (`toBaseUnits` / `fromBaseUnits`) convert between human decimal strings and the i128 base units the contract stores.
-- **BatchRequest builder** mirrors the contract struct: `BatchRequest { items: Vec<PayoutItem>, declared_total: i128, batch_id: u64 }`.
+- **BatchRequest builder** mirrors the contract struct: `BatchRequest { items, declared_total, batch_id }`.
 - **Network-mismatch guard** verifies the wallet passphrase matches the configured network before signing.
 
-UI components never import the Stellar SDK directly.
+The connected wallet must be the contract **treasury**, since the contract enforces `treasury.require_auth()`.
+
+```tsx
+// Connect + read contract state
+const { publicKey } = await getWalletState();
+const status = await getContractStatus(publicKey ?? undefined);
+
+// Submit a batch (connected wallet must be the contract treasury)
+await executeBatchPayroll(request, publicKey);
+```
+
+---
 
 ## Architecture & Flow
 
@@ -145,85 +178,53 @@ And the equivalent ASCII flow:
                                      +------------------------------+
 ```
 
-## Local setup
+### Component map
 
-Prerequisites: Node.js v18+.
-
-```bash
-npm install
-npm run dev
-```
-
-Build and verify:
-
-```bash
-npm run lint
-npm run build   # Next.js type-checks during build
-```
-
-## Development
-
-Use one branch per issue or feature. Follow these conventions:
-
-- Keep all network/contract access inside `src/lib/harbor.ts`; UI components must not import `@stellar/stellar-sdk` directly.
-- Use the `build -> simulate -> sign (Freighter) -> send -> poll` pattern from `executeBatchPayroll` for every write path.
-- Server components for static shells; `"use client"` only where wallet/async state is needed.
-- Verify with `npm run build` (Next.js type-checks on build) and `npm run lint`.
-
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the next contribution opportunities and [CONTRIBUTING.md](CONTRIBUTING.md) for how to land changes.
-
-## Project layout
-
-```
-harbor-frontend/
-├── .env.local.example          # Env template (mock contract on testnet)
-├── .eslintrc.json              # ESLint config
-├── next.config.mjs             # Next.js config
-├── tailwind.config.ts          # Tailwind config
-├── postcss.config.mjs          # PostCSS config
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx          # Root layout + fonts
-│   │   ├── page.tsx            # Landing page
-│   │   ├── globals.css         # Global styles
-│   │   ├── dashboard/          # Live contract state
-│   │   ├── invoices/           # Batch payout form
-│   │   ├── ledger/             # Payout event history
-│   │   └── settings/           # Runtime network config
-│   ├── components/
-│   │   ├── BatchPayoutForm.tsx # Compose + submit a batch
-│   │   ├── ContractConfig.tsx  # Contract address / init
-│   │   ├── ContractStatus.tsx  # Live contract state
-│   │   ├── Nav.tsx             # App navigation
-│   │   ├── PayoutEvents.tsx    # Ledger events list
-│   │   └── WalletButton.tsx    # Freighter connect
-│   └── lib/
-│       ├── harbor.ts           # Single contract-integration layer
-│       └── useWallet.ts        # Wallet state hook
-├── docs/
-│   └── ROADMAP.md              # Contribution opportunities
-└── CONTRIBUTING.md             # Developer setup + PR workflow
-```
-
-## Operator Guide
-
-Wire the app to a production deployment:
-
-1. **Deploy + initialize.** Deploy `hedgepay_batch` (see [Harbor-hq/harbor](https://github.com/Harbor-hq/harbor)) and run `initialize(admin, treasury, token)`.
-2. **Configure the frontend.** Set `NEXT_PUBLIC_HARBOR_CONTRACT_ID`, `NEXT_PUBLIC_HARBOR_RPC_URL`, and `NEXT_PUBLIC_HARBOR_NETWORK_PASSPHRASE` in the deployment env.
-3. **Connect the backend.** Deploy the Harbor backend and point `NEXT_PUBLIC_HARBOR_EVENTS_URL` at its `/payouts` endpoint so the Ledger shows real events.
-4. **Connect a treasury wallet.** The Freighter wallet used to submit batches must be the contract **treasury**.
-
-## Security Notes
-
-- **Treasury-only writes:** `execute_batch_payroll` can only be run by the contract treasury; the app surfaces clean Unauthorized errors otherwise.
-- **Amount handling:** all amounts are converted with `toBaseUnits` / `fromBaseUnits` — never raw math.
-- **Network mismatch guard:** the app verifies the wallet's network passphrase matches the configured network before signing.
-- **Config isolation:** all contract/RPC access stays in `src/lib/harbor.ts`; UI components never import the Stellar SDK.
-- **No secrets in the client:** only public `NEXT_PUBLIC_*` config is shipped to the browser.
-
-## Part of Harbor
+| Component | Purpose |
+| --- | --- |
+| `BatchPayoutForm.tsx` | Compose + submit a batch. |
+| `ContractConfig.tsx` | Contract address / initialization. |
+| `ContractStatus.tsx` | Live contract state display. |
+| `Nav.tsx` | App navigation. |
+| `PayoutEvents.tsx` | Ledger events list. |
+| `WalletButton.tsx` | Freighter connect. |
+| `useWallet.ts` (`src/lib`) | Wallet state hook. |
 
 ---
 
-Contracts: [Harbor-hq/harbor](https://github.com/Harbor-hq/harbor) · Backend: [Harbor-hq/harbor-backend](https://github.com/Harbor-hq/harbor-backend)
+## Design Principles
+
+**Single integration point** — all Stellar access lives in `src/lib/harbor.ts`; UI components never import the Stellar SDK directly.
+
+**Treasury-only writes** — `execute_batch_payroll` can only be run by the contract treasury; the app surfaces clean Unauthorized errors otherwise.
+
+**Build -> simulate -> sign -> send -> poll** — every write path shares the same pipeline, including resource-fee estimation and transaction polling.
+
+**BigInt-safe amounts** — all amounts are converted with `toBaseUnits` / `fromBaseUnits`; never raw math.
+
+**Config over control-flow** — network/contract/RPC are runtime-overridable from Settings, layered over env vars and testnet defaults.
+
+**No secrets in the client** — only public `NEXT_PUBLIC_*` config is shipped to the browser.
+
+---
+
+## Contributing
+
+Pull requests are welcome. For significant changes, please open an issue first to discuss what you'd like to change.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines, code style, and the PR process.
+
+Verify before pushing:
+
+```bash
+npm run build   # Next.js type-checks during build
+npm run lint
+```
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the next contribution opportunities (contract init UI, admin functions, payout events API + ledger, client-side batch validation, CSV import, multi-sig treasury).
+
+---
+
+## License
+
+[MIT](LICENSE)
