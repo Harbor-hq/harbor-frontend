@@ -208,9 +208,9 @@ function scvSymbol(value: string): ScVal {
 
 function scvMap(entries: Record<string, ScVal>): ScVal {
   return xdr.ScVal.scvMap(
-    Object.entries(entries).map(
-      ([key, val]) => new xdr.ScMapEntry({ key: scvSymbol(key), val })
-    )
+    Object.entries(entries)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, val]) => new xdr.ScMapEntry({ key: scvSymbol(key), val }))
   );
 }
 
