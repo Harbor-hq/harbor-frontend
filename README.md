@@ -39,6 +39,7 @@ It works out of the box against the public Soroban testnet with a mock contract 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
+- [Deployment](#deployment)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
 - [The Contract Integration Layer (`src/lib/harbor.ts`)](#the-contract-integration-layer-srclibharborts)
@@ -80,32 +81,33 @@ Open [http://localhost:3000](http://localhost:3000). You'll land on `/dashboard`
 
 Configuration is layered, in priority order:
 
-1. **Runtime overrides** — set from the **Settings** page, persisted to `localStorage` (`harbor.config.overrides`). Great for swapping networks without a rebuild.
-2. **Build-time env vars** — `NEXT_PUBLIC_HARBOR_*`, read from `.env.local`.
-3. **Defaults** — public Soroban testnet with a mock contract id.
+1. **Runtime overrides** — Set from the **Settings** page and persisted in the browser's `localStorage` (`harbor.config.overrides`). These overrides take priority, allowing quick network/contract swaps without rebuilding the application.
+2. **Build-time env vars** — Loaded from `.env.local` during build/start (prefix `NEXT_PUBLIC_HARBOR_*`).
+3. **Defaults** — Public Soroban testnet defaults with a mock contract ID.
 
-### Connecting a real deployment
+### Environment Variables Reference Table
 
-1. Deploy `hedgepay_batch` — see `contracts/hedgepay_batch` in the upstream [harbor](https://github.com/Harbor-hq/harbor) repo.
-2. Copy the example env file and fill in your values:
+Copy `.env.local.example` to `.env.local` and define the following variables:
 
-   ```bash
-   cp .env.local.example .env.local
-   ```
+| Variable Name | Purpose / Description | Default Value | Example Value |
+|---|---|---|---|
+| `NEXT_PUBLIC_HARBOR_CONTRACT_ID` | Deployed C-address of the `hedgepay_batch` contract | `CD4U2T3X5K7G2J6L4A8B9Z1Y0W_MOCK_CONTRACT_ID` | `CDQMLR7BUWEGNRVVMVYQYBTANAG3JXLDRR4V4RZYPOOG53XDKGC3PJYQ` |
+| `NEXT_PUBLIC_HARBOR_RPC_URL` | Soroban RPC endpoint URL | `https://soroban-testnet.stellar.org` | `https://soroban-testnet.stellar.org` |
+| `NEXT_PUBLIC_HARBOR_NETWORK_PASSPHRASE` | Passphrase indicating the Stellar network to connect to | `Test SDF Network ; September 2015` | `Public Global Stellar Network ; October 2015` |
+| `NEXT_PUBLIC_HARBOR_TOKEN_DECIMALS` | Decimals of the base settlement token (USDC = 6) | `6` | `6` |
+| `NEXT_PUBLIC_HARBOR_EVENTS_URL` | HTTP API exposed by the payout listener (`harbor-backend`) | unset (Ledger returns no events) | `http://localhost:8787/payouts` |
 
-3. Set the following:
+Every one of these variables can be overridden at runtime from the **Settings** page in the dashboard interface, which persists overrides in `localStorage`.
 
-   | Variable | Purpose | Default |
-   |---|---|---|
-   | `NEXT_PUBLIC_HARBOR_CONTRACT_ID` | Deployed C-address of the `hedegpay_batch` contract | mock contract id |
-   | `NEXT_PUBLIC_HARBOR_RPC_URL` | Soroban RPC endpoint | `https://soroban-testnet.stellar.org` |
-   | `NEXT_PUBLIC_HARBOR_NETWORK_PASSPHRASE` | Stellar network passphrase | Test SDF Network passphrase |
-   | `NEXT_PUBLIC_HARBOR_TOKEN_DECIMALS` | Decimal places of the settlement token (USDC = 6) | `6` |
-   | `NEXT_PUBLIC_HARBOR_EVENTS_URL` | HTTP API exposed by the payout listener (`Harbor-hq/harbor`'s `listener/index.js`) | unset → Ledger returns no events |
+---
 
-4. Restart `npm run dev`.
+## Deployment
 
-Every one of these can also be overridden live from **Settings** in the browser, independent of a rebuild.
+For step-by-step instructions on deploying the Harbor frontend, please see the [Harbor Frontend Deployment Guide](docs/DEPLOYMENT.md). It covers:
+- Deploying directly to **Vercel** (the easiest path)
+- **Self-hosting** using standard `npm run build && npm start` configurations
+- Managing environment variables and runtime overrides in production environments
+
 
 ---
 
