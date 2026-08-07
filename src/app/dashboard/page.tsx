@@ -1,6 +1,7 @@
 import Link from "next/link";
 import WalletButton from "@/components/WalletButton";
 import ContractStatus from "@/components/ContractStatus";
+import BatchUtilization from "@/components/BatchUtilization";
 
 export const metadata = {
   title: "Dashboard — Harbor",
@@ -20,6 +21,8 @@ export default function DashboardPage() {
       </div>
 
       <ContractStatus />
+
+      <BatchUtilization />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
