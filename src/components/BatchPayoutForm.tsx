@@ -44,6 +44,7 @@ export default function BatchPayoutForm() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [treasury, setTreasury] = useState<string | null>(null);
+  const [maxBatchSize, setMaxBatchSize] = useState<number>(100);
 
   useEffect(() => {
     localStorage.setItem("harbor.batch.draft", JSON.stringify(rows));
@@ -54,6 +55,7 @@ export default function BatchPayoutForm() {
       const status = await getContractStatus(publicKey ?? undefined);
       if (status.ok) {
         setTreasury(status.status.treasury);
+        setMaxBatchSize(status.status.maxBatchSize);
         if (!batchId && status.status.batchCounter !== "0") {
           setBatchId(String(BigInt(status.status.batchCounter) + BigInt(1)));
         }
@@ -111,9 +113,13 @@ export default function BatchPayoutForm() {
     }
   };
 
+  const activeItemsCount = rows.filter((r) => r.payee.trim() && r.amount.trim()).length;
+  const isOverlimit = activeItemsCount > maxBatchSize;
+
   const canSubmit =
     publicKey !== null &&
     !busy &&
+    !isOverlimit &&
     rows.some((r) => r.payee.trim() && r.amount.trim());
 
   return (
@@ -261,6 +267,12 @@ export default function BatchPayoutForm() {
           </button>
         </div>
       </div>
+
+      {isOverlimit && (
+        <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          Warning: The batch contains {activeItemsCount} payouts, which exceeds the contract maximum limit of {maxBatchSize}. Please split them into smaller batches.
+        </div>
+      )}
 
       {result && (
         <div
