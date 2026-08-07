@@ -56,7 +56,7 @@ export default function BatchPayoutForm() {
       if (status.ok) {
         setTreasury(status.status.treasury);
         setMaxBatchSize(status.status.maxBatchSize);
-        if (!batchId && status.status.batchCounter !== "0") {
+        if (!batchId) {
           setBatchId(String(BigInt(status.status.batchCounter) + BigInt(1)));
         }
       }
