@@ -25,6 +25,8 @@ export default function PayoutEvents() {
 
   useEffect(() => {
     load();
+    const interval = setInterval(load, 15000);
+    return () => clearInterval(interval);
   }, [load]);
 
   const exportToCsv = () => {
