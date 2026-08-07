@@ -27,12 +27,27 @@ function newRow(): Row {
 
 export default function BatchPayoutForm() {
   const { publicKey, connect } = useWallet();
-  const [rows, setRows] = useState<Row[]>([newRow()]);
+  const [rows, setRows] = useState<Row[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("harbor.batch.draft");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return [newRow()];
+  });
   const [batchId, setBatchId] = useState("");
   const [declaredTotal, setDeclaredTotal] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [treasury, setTreasury] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem("harbor.batch.draft", JSON.stringify(rows));
+  }, [rows]);
 
   useEffect(() => {
     (async () => {
@@ -73,16 +88,19 @@ export default function BatchPayoutForm() {
     setBusy(true);
     setResult(null);
     try {
-      setResult(
-        await executeBatchPayroll(
-          {
-            items,
-            declaredTotal: total,
-            batchId: batchId.trim() || "1",
-          },
-          publicKey
-        )
+      const res = await executeBatchPayroll(
+        {
+          items,
+          declaredTotal: total,
+          batchId: batchId.trim() || "1",
+        },
+        publicKey
       );
+      setResult(res);
+      if (res.status === "success") {
+        setRows([newRow()]);
+        localStorage.removeItem("harbor.batch.draft");
+      }
     } catch (err) {
       setResult({
         status: "error",
