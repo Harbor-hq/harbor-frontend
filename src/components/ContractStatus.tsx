@@ -38,7 +38,12 @@ export default function ContractStatus() {
     status.kind === "ok"
       ? [
           { label: "Admin", value: shortAddress(status.status.admin) || "—" },
-          { label: "Treasury", value: shortAddress(status.status.treasury) || "—" },
+          {
+            label: "Treasury",
+            value: status.status.treasuryBalance
+              ? `${shortAddress(status.status.treasury)} (${status.status.treasuryBalance} USDC)`
+              : shortAddress(status.status.treasury) || "—",
+          },
           { label: "Token", value: shortAddress(status.status.token) || "—" },
           { label: "Dex router", value: shortAddress(status.status.dexRouter) || "—" },
           { label: "Max batch size", value: String(status.status.maxBatchSize) },
