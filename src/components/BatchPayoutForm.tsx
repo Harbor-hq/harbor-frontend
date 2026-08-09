@@ -255,6 +255,9 @@ export default function BatchPayoutForm() {
           />
           <span className="mt-1 block text-xs text-slate-400">
             Sum of rows: {fromBaseUnits(autoTotal)} (auto)
+            {declaredTotal.trim() && declaredTotal.trim() !== fromBaseUnits(autoTotal) && (
+              <span className="text-amber-600 font-medium ml-1">⚠️ total mismatch</span>
+            )}
           </span>
         </label>
         <div className="flex items-end">
