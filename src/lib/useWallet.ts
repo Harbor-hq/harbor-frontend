@@ -23,7 +23,17 @@ export function useWallet(): UseWalletResult {
   });
 
   const refresh = useCallback(async () => {
-    setState(await getWalletState());
+    const ws = await getWalletState();
+    if (!ws.publicKey && typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("harbor.wallet.publickey");
+        if (cached) {
+          setState({ available: ws.available, publicKey: cached });
+          return;
+        }
+      } catch {}
+    }
+    setState(ws);
   }, []);
 
   useEffect(() => {
@@ -33,6 +43,11 @@ export function useWallet(): UseWalletResult {
   const connect = useCallback(async () => {
     if (!isWalletAvailable()) return null;
     const publicKey = await getWalletPublicKey(true);
+    if (publicKey && typeof window !== "undefined") {
+      try {
+        localStorage.setItem("harbor.wallet.publickey", publicKey);
+      } catch {}
+    }
     setState({ available: true, publicKey });
     return publicKey;
   }, []);
