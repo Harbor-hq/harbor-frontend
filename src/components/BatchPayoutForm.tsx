@@ -176,8 +176,12 @@ export default function BatchPayoutForm() {
               value={row.payee}
               onChange={(e) => setRow(row.id, { payee: e.target.value })}
               placeholder="G…"
-              aria-label="Payee wallet address or Federation ID"
-              className="rounded-md border border-slate-300 px-3 py-1.5 font-mono text-sm focus:border-slate-500 focus:outline-none w-full"
+              aria-label="Payee address"
+              className={`rounded-md border px-3 py-1.5 font-mono text-sm focus:outline-none w-full ${
+                row.payee.trim() && !/^G[A-Z2-7]{55}$/.test(row.payee.trim())
+                  ? "border-red-500 text-red-700 bg-red-50"
+                  : "border-slate-300 focus:border-slate-500"
+              }`}
             />
             <div className="block sm:hidden text-[10px] font-medium uppercase tracking-wide text-slate-400">
               Amount
