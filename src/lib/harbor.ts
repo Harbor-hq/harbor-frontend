@@ -573,3 +573,87 @@ export async function fetchPayoutEvents(): Promise<PayoutEvent[]> {
   const json = (await res.json()) as PayoutEvent[];
   return json;
 }
+
+/* ------------------------------------------------------------------ *
+ * Contract admin & utility helpers
+ * ------------------------------------------------------------------ */
+
+export async function getNextBatchId(config = getConfig()): Promise<string> {
+  const status = await getContractStatus(undefined, config);
+  if (status.ok) {
+    return String(BigInt(status.status.batchCounter) + BigInt(1));
+  }
+  return "1";
+}
+
+export function mapContractError(error: string): string {
+  if (/NotInitialized/i.test(error)) return "Contract is not initialized.";
+  if (/AlreadyInitialized/i.test(error)) return "Contract is already initialized.";
+  if (/Unauthorized/i.test(error)) return "Sender is not authorized (Admin only).";
+  if (/BatchSizeExceeded/i.test(error)) return "Batch size exceeds maximum limit.";
+  if (/TotalMismatch/i.test(error)) return "Declared total does not match payout sum.";
+  return error;
+}
+
+export async function initializeContract(
+  params: {
+    admin: string;
+    treasury: string;
+    token: string;
+    maxBatchSize: number;
+    dexRouter: string;
+  },
+  sourcePublicKey: string,
+  config = getConfig()
+): Promise<SubmitResult> {
+  const contract = new Contract(config.contractId);
+  const op = contract.call(
+    "initialize",
+    Address.fromString(params.admin).toScVal(),
+    Address.fromString(params.treasury).toScVal(),
+    Address.fromString(params.token).toScVal(),
+    nativeToScVal(params.maxBatchSize, { type: "u32" }),
+    Address.fromString(params.dexRouter).toScVal()
+  );
+  return submitContractCall(op, sourcePublicKey, config);
+}
+
+export async function updateTreasury(
+  newTreasury: string,
+  sourcePublicKey: string,
+  config = getConfig()
+): Promise<SubmitResult> {
+  const contract = new Contract(config.contractId);
+  const op = contract.call("set_treasury", Address.fromString(newTreasury).toScVal());
+  return submitContractCall(op, sourcePublicKey, config);
+}
+
+export async function updateMaxBatch(
+  newMax: number,
+  sourcePublicKey: string,
+  config = getConfig()
+): Promise<SubmitResult> {
+  const contract = new Contract(config.contractId);
+  const op = contract.call("set_max_batch_size", nativeToScVal(newMax, { type: "u32" }));
+  return submitContractCall(op, sourcePublicKey, config);
+}
+
+export async function updateAdmin(
+  newAdmin: string,
+  sourcePublicKey: string,
+  config = getConfig()
+): Promise<SubmitResult> {
+  const contract = new Contract(config.contractId);
+  const op = contract.call("set_admin", Address.fromString(newAdmin).toScVal());
+  return submitContractCall(op, sourcePublicKey, config);
+}
+
+export async function updateDexRouter(
+  newRouter: string,
+  sourcePublicKey: string,
+  config = getConfig()
+): Promise<SubmitResult> {
+  const contract = new Contract(config.contractId);
+  const op = contract.call("set_dex_router", Address.fromString(newRouter).toScVal());
+  return submitContractCall(op, sourcePublicKey, config);
+}
