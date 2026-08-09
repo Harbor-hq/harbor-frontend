@@ -42,6 +42,7 @@ export default function BatchPayoutForm() {
   const [batchId, setBatchId] = useState("");
   const [declaredTotal, setDeclaredTotal] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [treasury, setTreasury] = useState<string | null>(null);
   const [maxBatchSize, setMaxBatchSize] = useState<number>(100);
@@ -266,7 +267,7 @@ export default function BatchPayoutForm() {
         </label>
         <div className="flex items-end">
           <button
-            onClick={handleSubmit}
+            onClick={() => setConfirming(true)}
             disabled={!canSubmit}
             className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -274,6 +275,41 @@ export default function BatchPayoutForm() {
           </button>
         </div>
       </div>
+
+      {confirming && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Confirm On-Chain Batch Payout
+            </h3>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              You are about to submit batch #{batchId || "1"} containing {activeItemsCount} payout(s) totaling{" "}
+              <span className="font-semibold text-slate-900 dark:text-slate-200">
+                {declaredTotal.trim() || fromBaseUnits(autoTotal)} USDC
+              </span>{" "}
+              on-chain.
+            </p>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={() => setConfirming(false)}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setConfirming(false);
+                  handleSubmit();
+                }}
+                disabled={busy}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                Confirm & Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isOverlimit && (
         <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
