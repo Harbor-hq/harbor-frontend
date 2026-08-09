@@ -2,6 +2,7 @@ import Link from "next/link";
 import WalletButton from "@/components/WalletButton";
 import ContractStatus from "@/components/ContractStatus";
 import BatchUtilization from "@/components/BatchUtilization";
+import BatchSummary from "@/components/BatchSummary";
 
 export const metadata = {
   title: "Dashboard — Harbor",
@@ -19,6 +20,8 @@ export default function DashboardPage() {
         </div>
         <WalletButton />
       </div>
+
+      <BatchSummary />
 
       <ContractStatus />
 
