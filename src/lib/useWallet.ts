@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  clearOverrides,
   getWalletPublicKey,
   getWalletState,
   isWalletAvailable,
@@ -37,6 +38,13 @@ export function useWallet(): UseWalletResult {
   }, []);
 
   const disconnect = useCallback(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("harbor.wallet.publickey");
+        sessionStorage.removeItem("harbor.wallet.session");
+      } catch {}
+    }
+    clearOverrides();
     setState({ available: isWalletAvailable(), publicKey: null });
   }, []);
 
