@@ -84,7 +84,7 @@ export function getConfig(): NetworkConfig {
     contractId:
       ov.contractId ??
       process.env.NEXT_PUBLIC_HARBOR_CONTRACT_ID ??
-      "CD4U2T3X5K7G2J6L4A8B9Z1Y0W_MOCK_CONTRACT_ID",
+      "CAZU4T3LWQGXBBBFZPCWWVDRT2PWOF3G6S44XVNDCHKM24KUDKQQ5L2E",
     rpcUrl:
       ov.rpcUrl ??
       process.env.NEXT_PUBLIC_HARBOR_RPC_URL ??
